@@ -1,0 +1,10 @@
+{
+  "warp":{"sx":0,"sy":0,"tilew":32,"tileh":32,"frames":1},
+  "dJumpPad":{"sx":32,"sy":0,"tilew":12,"tileh":12,"frames":1},
+  "bullet":{"sx":44,"sy":0,"cols":2,"tilew":4,"tileh":4,"frames":2},
+  "invisibleBlock":{"sx":0,"sy":32,"tilew":32,"tileh":32,"frames":1},
+  "visibleBlock":{"sx":32,"sy":32,"tilew":32,"tileh":32,"frames":1},
+  "exam":{"sx":0,"sy":64,"tilew":57,"tileh":67,"frames":1},
+  "bossWarp":{"sx":0,"sy":131,"tilew":32,"tileh":32,"frames":1},
+  "fructiv":{"sx":64,"sy":0,"tilew":243,"tileh":544,"frames":1}
+}

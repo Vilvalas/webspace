@@ -1,0 +1,7 @@
+{
+  "player_death":{"sx":0,"sy":0,"cols":16,"tilew":32,"tileh":32,"frames":16},
+  "player_idle":{"sx":0,"sy":32,"cols":4,"tilew":32,"tileh":32,"frames":4},
+  "player_walking":{"sx":128,"sy":32,"cols":4,"tilew":32,"tileh":32,"frames":4},
+  "player_jumping":{"sx":256,"sy":32,"cols":2,"tilew":32,"tileh":32,"frames":2},
+  "player_falling":{"sx":320,"sy":32,"cols":2,"tilew":32,"tileh":32,"frames":2}
+}

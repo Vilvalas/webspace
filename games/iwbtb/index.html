@@ -1,0 +1,354 @@
+<!DOCTYPE HTML>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>I Wanna Be The Bachelor</title>
+
+    <!-- integrate jQuery -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+
+    <!-- integrate Quintus libraries !-->
+    <script src='lib/quintus.js'></script>
+    <script src='lib/quintus_sprites.js'></script>
+    <script src='lib/quintus_scenes.js'></script>
+    <script src='lib/quintus_input.js'></script>
+    <script src='lib/quintus_anim.js'></script>
+    <script src='lib/quintus_2d.js'></script>
+    <script src='lib/quintus_touch.js'></script>
+    <script src='lib/quintus_ui.js'></script>
+    <script src='lib/quintus_tmx.js'></script>
+    <script src='lib/quintus_audio.js'></script>
+
+    <!-- integrate javascript game files !-->
+    <script src='scripts/iwbtb.js'></script>
+    <script src='scripts/animation.js'></script>
+    <script src='scripts/player.js'></script>
+    <script src='scripts/spike.js'></script>
+    <script src='scripts/fruit.js'></script>
+    <script src='scripts/bullet.js'></script>
+    <script src='scripts/warp.js'></script>
+    <script src='scripts/invisibleBlock.js'></script>
+    <script src='scripts/boss.js'></script>
+    <script src='scripts/gameover.js'></script>
+
+    <!-- integrate a CSS style sheet -->
+    <link rel="stylesheet" type="text/css" href="style.css">
+
+    <!-- set favicon (little icon displayed on each tab)-->
+    <link rel="shortcut icon" href="images/favicon.png"/>
+
+    <script>
+        // will run once the DOM is ready
+        $(document).ready(function () {
+			if (!document.cookie) {
+				document.cookie = "expires=Thu, 01 Jan 2065 12:00:00 UTC;";
+			}
+			// set default values if cookie is not initialized
+			level = getCookie("level") ? parseInt(getCookie("level")) : 1;
+			deaths = getCookie("deaths") ? parseInt(getCookie("deaths")) : 0;
+			shots = getCookie("shots") ? parseInt(getCookie("shots")) : 0;
+			// load the game, using the user stats, which we got from the database
+			loadGame(level, deaths, shots, function () {
+				// callback-function, gets called when the game is fully loaded
+				// the game may now be started
+				gameReady = true;
+			});
+        });
+
+        // will run once the entire page is ready and all images are fully loaded
+        $(window).load(function () {
+            introMusic.play();
+            startMenuLoop();
+            menuState = "intro";
+        })
+    </script>
+</head>
+<body>
+<div class="centeredCanvasDiv">
+    <!-- generate 2 separate canvas elements for menu and gameplay on top of each other
+    this allows us to load the game in the background without breaking the intro,
+    as well as to load the game only once and keep it running in the background
+    otherwise Quintus would block the canvas, even if there is currently no stage active -->
+    <canvas class="centeredCanvas" id="menuCanvas" width="800" height="608">
+    </canvas>
+    <canvas class="centeredCanvas" id="gameCanvas" width="800" height="608">
+    </canvas>
+</div>
+<script>
+    var CANVAS_WIDTH = 800;
+    var CANVAS_HEIGHT = 608;
+    var FPS = 60;
+    // sets the gap between the different mainMenu options
+    var MAINMENU_GAP = 45;
+    // we have 2 different gameLoops: one is from quintus and controls the "real" game, the other one is defined in this variable and controls the menus
+    // save the gameLoop interval in a variable, so it might be stopped
+    var gameLoop;
+    // get the menuCanvas we created on the page
+    var canvas = document.getElementById("menuCanvas");
+    // get the context of the canvas
+    var context = canvas.getContext("2d");
+
+    // load menu images
+    var loadingImage = new Image();
+    var introImage = new Image();
+    var mainMenuImage = new Image();
+    var controlsImage = new Image();
+    var mainMenuKid = [];
+    var mainMenuArrow = [];
+    loadingImage.src = 'images/loading.png';
+    introImage.src = 'images/intro.png';
+    mainMenuImage.src = 'images/mainmenu.png';
+    controlsImage.src = 'images/controls.png';
+    for (var i = 0; i < 4; i++) {
+        mainMenuKid[i] = new Image();
+        mainMenuKid[i].src = 'images/mainMenuKid' + i + '.png';
+        mainMenuArrow[i] = new Image();
+        mainMenuArrow[i].src = 'images/mainMenuArrow' + i + '.png';
+    }
+
+    loadingImage.onload = function () {
+        // display the loading image until all images are fully loaded and $(window).load() is called
+        context.drawImage(loadingImage, 240, 248);
+    };
+
+    // load menu music
+    var introMusic = new Audio('audio/intro.mp3');
+	introMusic.volume = 0.6;
+    var mainMenuMusic = new Audio('audio/mainmenu.mp3');
+	mainMenuMusic.volume = 0.8;
+    mainMenuMusic.loop = true;
+
+    // initialize menu variables
+    // menuState indicates, which state the player is currently in
+    // the possible states are: loading, intro, mainmenu, controls, playing
+    var menuState = "loading";
+    // a frameCount for animating text and sprites
+    var frameCount = 0;
+    // define a font for rendering text
+    context.font = "32pt Arial";
+    // the intro screen text
+    var text = ["In the Year 20XX", "On his 18th Birthday", "A child left home", "On his dangerous and epic quest", "To become The Bachelor!"];
+    // indicates which element of text is currently rendered on screen
+    var pointer = 0;
+    // used for fading out text in the intro
+    var alpha = 0;
+    // indicates, which mainmenu entry is currently selected by the player
+    var mainMenuSelector = 0;
+    // indicates, if the game is fully loaded and may be started
+    var gameReady = false;
+
+    // define user stats (filled by database)
+    var userID;
+    var level;
+    var deaths;
+    var shots;
+
+    // listen for user input
+    // Canvas element doesn't support keypress, so we check on the html body instead to reach the same goal
+    $("body").keydown(function (event) {
+        // event.which gives the integer representative of the key, which was pressed
+        var keyPressed = event.which;
+        if (menuState == "intro") {
+            // any key pressed skips the intro
+            introToMainMenu();
+        } else if (menuState == "mainmenu") {
+            // 13 = Enter, 32 = Space
+            if (keyPressed == 13 || keyPressed == 32) {
+                if (mainMenuSelector == 0) {
+                    // the user pressed "Start Game"
+                    mainMenuMusic.pause();
+                    // indicate that the user is playing the game / wants to play the game right now
+                    menuState = "playing";
+                    // check if the game is fully loaded
+                    if (gameReady) {
+                        // start the game
+                        menuStartGame();
+                    }
+                } else if (mainMenuSelector == 1) {
+                    // the user pressed "Controls"
+                    menuState = "controls";
+                } else if (mainMenuSelector == 2) {
+                    // the user pressed "Sign Out"
+                    resetData();
+                }
+            }
+            // 38 Arrow Key "up", 40 Arrow Key "down"
+            else if (keyPressed == 38) {
+                if (mainMenuSelector > 0) {
+                    mainMenuSelector--;
+                }
+            } else if (keyPressed == 40) {
+                // if (mainMenuSelector < 2) {
+				if (mainMenuSelector < 1) {
+                    mainMenuSelector++;
+                }
+            }
+        } else if (menuState == "controls") {
+            // 27 = Escape
+            if (keyPressed == 27) {
+                menuState = "mainmenu";
+            }
+        }
+    });
+
+    // returns a cookie to a given cookie name as string
+    function getCookie(cname) {
+        var name = cname + "=";
+        var ca = document.cookie.split(';');
+        for (var i = 0; i < ca.length; i++) {
+            var c = ca[i];
+            while (c.charAt(0) == ' ') c = c.substring(1);
+            if (c.indexOf(name) == 0) return c.substring(name.length, c.length);
+        }
+        return "";
+    }
+
+    function startMenuLoop() {
+        // this acts as a GameLoop for the menu; start it, when the document is ready
+        gameLoop = setInterval(function () {
+            update();
+            render();
+        }, 1000 / FPS);
+    }
+
+    function update() {
+        if (menuState == "intro") {
+            if (frameCount % 231 < 100) {
+                introFade(true);
+            } else if (frameCount % 231 >= 130 && frameCount % 231 < 230) {
+                introFade(false);
+            } else if (frameCount % 231 == 230) {
+                pointer++;
+                // check if there is no more intro text to display
+                if (pointer >= text.length) {
+                    introToMainMenu();
+                }
+            }
+        } else if (menuState == "playing") {
+            // the user wants to play the game, but it wasn't fully loaded when he attempted to start it
+            // check if the game is ready in this update Step and start it as soon as possible
+            if (gameReady) {
+                menuStartGame();
+            }
+        }
+        frameCount++;
+    }
+
+    function introFade(plus) {
+        // fade the text in or out, depending on the local variable plus
+        plus ? alpha += 0.01 : alpha -= 0.01;
+    }
+
+    function introToMainMenu() {
+        // make sure the font is fully visible when drawing in main menu
+        context.fillStyle = "rgba(255, 255, 255, 1)";
+        introMusic.pause();
+        mainMenuMusic.play();
+        menuState = "mainmenu";
+    }
+
+    function menuStartGame() {
+        // clear up the menu screen
+        // note: this is not necessary anymore, since the game canvas is rendered above the menu and we disabled scaleToFit in Quintus
+        // but I still feel like it's the "clean" approach
+        context.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+        // shut down the game loop of the menu page --> the menu loop is not needed while the game is running
+        window.clearInterval(gameLoop);
+        // start the game
+        startGame();
+    }
+
+    // saves the current user stats in the database
+    // gets called in game, when the player dies or progresses to the next level
+    // or directly in here, when the game called playingToMainMenu()
+    function saveUserStats(level, deaths, shots) {
+        // save the user stats in a cookie
+		document.cookie = "level=" + level;
+		document.cookie = "deaths=" + deaths;
+		document.cookie = "shots=" + shots;
+    }
+
+    // gets called, when the player is ingame and going back to menu
+    // gets the current user stats, to update the display
+    // doesn't show the intro and directly goes back to mainmenu
+    function playingToMainMenu(level, deaths, shots) {
+        // update user stats in menu
+        this.level = level;
+        this.deaths = deaths;
+        this.shots = shots;
+        menuState = "mainmenu";
+        // restart the menu loop
+        startMenuLoop();
+        // reset the mainMenuMusic
+        mainMenuMusic.currentTime = 0;
+        mainMenuMusic.play();
+        // save the user stats, so if the user quits from mainmenu, or signs out, they will be up to date next time
+        saveUserStats(level, deaths, shots);
+    }
+
+    function resetData() {
+        document.cookie = "level=" + 1 + ";deaths=" + 0 + ";shots=" + 0;
+    }
+
+    function render() {
+        context.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+        if (menuState == "intro") {
+            context.drawImage(introImage, 0, 0);
+            context.fillStyle = "rgba(255, 255, 255, " + alpha + ")";
+            // to render all texts in a centered position, x-position depends on the length of the text
+            context.fillText(text[pointer], 410 - (text[pointer].length * 10.5), 520);
+        } else if (menuState == "mainmenu") {
+            context.drawImage(mainMenuImage, 0, 0);
+            // render mainMenu Options
+            // make the font bigger for drawing mainMenu Options
+            context.font = "24pt Arial";
+            context.fillText("Start Game", 280, 395);
+            context.fillText("Controls", 280, 395 + MAINMENU_GAP);
+            // context.fillText("Reset Data", 280, 395 + (2 * MAINMENU_GAP));
+            // render user stats on screen
+            // make the font smaller for drawing user stats
+            context.font = "16pt Arial";
+            if (level == 30) {
+                context.fillText("Game Cleared !!", 20, 520);
+            } else {
+                context.fillText("Current Level: " + level.toString(), 20, 520);
+            }
+            context.fillText("Deaths: " + deaths.toString(), 20, 550);
+            context.fillText("Shots Fired: " + shots.toString(), 20, 580);
+            // draw the animated mainMenu Sprites (kid + arrow)
+            // to save cpu, we calculate the current modulo only once
+            var modulo24 = frameCount % 24;
+            var modulo18 = frameCount % 18;
+            // draw the animated mainMenu kid
+            // sprites change every 6 frames
+            if (modulo24 < 6) {
+                context.drawImage(mainMenuKid[0], 656, 401);
+            } else if (modulo24 < 12) {
+                context.drawImage(mainMenuKid[1], 656, 401);
+            } else if (modulo24 < 18) {
+                context.drawImage(mainMenuKid[2], 656, 401);
+            } else {
+                context.drawImage(mainMenuKid[3], 656, 401);
+            }
+            // draw the arrow, to indicate which menu option is selected
+            // the arrow is animated, similar to the kid, but sprites change every 3 frames
+            if (modulo18 < 3) {
+                context.drawImage(mainMenuArrow[0], 240, 374 + (mainMenuSelector * MAINMENU_GAP));
+            } else if (modulo18 < 6 || modulo18 >= 15) {
+                context.drawImage(mainMenuArrow[1], 240, 374 + (mainMenuSelector * MAINMENU_GAP));
+            } else if (modulo18 < 9 || (modulo18 >= 12 && modulo18 < 15 )) {
+                context.drawImage(mainMenuArrow[2], 240, 374 + (mainMenuSelector * MAINMENU_GAP));
+            } else {
+                context.drawImage(mainMenuArrow[3], 240, 374 + (mainMenuSelector * MAINMENU_GAP));
+            }
+        } else if (menuState == "controls") {
+            context.drawImage(controlsImage, 0, 0);
+        } else if (menuState == "playing") {
+            // loadingImage has 319x111px
+            context.drawImage(loadingImage, 240, 248);
+        }
+    }
+
+</script>
+</body>
+</html>

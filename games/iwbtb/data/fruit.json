@@ -1,0 +1,13 @@
+{
+  "redFruit":{"sx":0,"sy":0,"cols":3,"tilew":22,"tileh":24,"frames":3},
+  "azureFruit":{"sx":0,"sy":25,"cols":3,"tilew":22,"tileh":24,"frames":3},
+  "greenFruit":{"sx":0,"sy":50,"cols":3,"tilew":22,"tileh":24,"frames":3},
+  "magentFruit":{"sx":0,"sy":75,"cols":3,"tilew":22,"tileh":24,"frames":3},
+  "orangeFruit":{"sx":0,"sy":100,"cols":3,"tilew":22,"tileh":24,"frames":3},
+  "blueFruit":{"sx":0,"sy":125,"cols":3,"tilew":22,"tileh":24,"frames":3},
+  "emeraldFruit":{"sx":0,"sy":150,"cols":3,"tilew":22,"tileh":24,"frames":3},
+  "cyanFruit":{"sx":0,"sy":175,"cols":3,"tilew":22,"tileh":24,"frames":3},
+  "pinkFruit":{"sx":0,"sy":200,"cols":3,"tilew":22,"tileh":24,"frames":3},
+  "purpleFruit":{"sx":0,"sy":225,"cols":3,"tilew":22,"tileh":24,"frames":3},
+  "yellowFruit":{"sx":0,"sy":250,"cols":3,"tilew":22,"tileh":24,"frames":3}
+}

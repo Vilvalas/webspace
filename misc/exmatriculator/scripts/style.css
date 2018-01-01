@@ -1,0 +1,76 @@
+#links {
+      width: 100%;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      overflow:hidden;
+      background-color: #191919;
+      opacity:0.9742;
+      border-bottom: 2px dotted #424242;
+      border-top: 2px dotted #424242;
+      position:fixed;
+	left:0;
+	top:0;
+	right:0;
+      z-index:0;
+}
+#links li {
+      float: left; }
+#links li a,#song li {
+      display: block;
+      padding: 7.234124096px;
+      text-decoration: none;
+      font: 11px "Century Gothic", "Comic Sans MS", Arial;
+      color: #FFFFFF; }
+#links li a:hover {
+      color: #00FFFF;
+      background-color: #0f0f0f;
+      opacity: 1.0; }
+#links li b {
+        background-image:-webkit-gradient( linear, left top, right top, color-stop(0, #f22), color-stop(0.15, #f2f), color-stop(0.3, #22f), color-stop(0.45, #2ff), color-stop(0.6, #2f2),color-stop(0.75, #2f2), color-stop(0.9, #ff2), color-stop(1, #f22) );
+        color:transparent;
+        -webkit-background-clip: text;
+        font: 11px "Century Gothic", "Comic Sans MS", Arial; }
+#song {
+      width: 25%;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      overflow:hidden;
+      background-color: transparent;
+      position:fixed;
+	top:0;
+	right:0;
+      z-index:2;
+}
+#song li {
+      float: right; }
+#dampe {
+	text-align:center;
+	width:276px;
+	position:absolute; 
+	left:50%; 
+	margin-left: -130px; 
+	margin-top: -40px; 
+	animation: dampe 2.5s ease-in-out infinite; 
+	-webkit-animation: dampe 2.5s ease-in-out infinite; 
+}
+#dampe img {
+	width: 50%;
+}
+@keyframes dampe {
+	0% { top:45%; } 50% { top:50%; } 100% { top:45%; }
+}
+@-webkit-keyframes dampe {
+	0% { top:45%; } 50% { top:50%; } 100% { top:45%; }
+} 
+.frankerz img {
+    width: 1%; position: fixed; top: 50%; left: 50%;  margin-left: 0px; border:1px solid #000;
+}
+#video {
+    padding-top:5%;
+    width: 50%;
+    height: 50%;
+    margin: 0 auto 0;
+}
+
